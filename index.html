@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA Weather - 실시간 기상 예보 서비스</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="weather-clear"> <!-- Default weather class for sunny theme -->
+    <!-- Dynamic Atmospheric Effects Container -->
+    <div class="sky-effect-container" id="skyEffectContainer">
+        <!-- Rain/Snow/Stars will be generated dynamically here -->
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="logo-wrapper">
+                    <i class="fa-solid fa-cloud-sun-rain brand-icon"></i>
+                    <div class="logo-glow"></div>
+                </div>
+                <div class="brand-text">
+                    <h1>AURA <span class="accent-text">WEATHER</span></h1>
+                    <p class="tagline">실시간 기상 정보 서비스</p>
+                </div>
+            </div>
+            <div class="header-widgets">
+                <div class="time-widget glass-card">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="digitalClock">00:00:00</span>
+                </div>
+                <div class="status-widget glass-card" id="apiStatusBadge">
+                    <span class="status-dot green"></span>
+                    <span class="status-text" id="apiStatusText">연결 중...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard-grid">
+            <!-- Left Panel: Controls & Settings -->
+            <section class="control-panel glass-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-sliders"></i> 지역 및 기상 설정</h2>
+                </div>
+                
+                <!-- Coordinate Input -->
+                <div class="setting-group">
+                    <label class="setting-label">기상청 격자 좌표 (NX, NY)</label>
+                    <div class="coord-inputs">
+                        <div class="input-wrapper">
+                            <span>X</span>
+                            <input type="number" id="inputX" min="1" max="149" value="61">
+                        </div>
+                        <div class="input-wrapper">
+                            <span>Y</span>
+                            <input type="number" id="inputY" min="1" max="253" value="127">
+                        </div>
+                        <button class="btn btn-primary" id="btnSearchCoords" title="조회">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Geolocation & Preset Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary btn-full" id="btnMyLocation">
+                        <i class="fa-solid fa-location-crosshairs"></i> 내 위치 날씨 조회
+                    </button>
+                </div>
+
+                <!-- Presets -->
+                <div class="setting-group preset-group">
+                    <label class="setting-label">주요 지역 바로가기</label>
+                    <div class="preset-badges" id="presetBadgesContainer">
+                        <!-- Preset badges will be loaded here -->
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- Simulator Mode (User Friendly Design Testing) -->
+                <div class="setting-group simulator-group">
+                    <div class="simulator-header">
+                        <label class="setting-label"><i class="fa-solid fa-wand-magic-sparkles"></i> 비주얼 테마 시뮬레이터</label>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleSimulator">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <p class="simulator-desc">실제 기상청 API 대신 다양한 날씨 테마와 모션 이펙트를 직접 선택하여 경험해 볼 수 있습니다.</p>
+                    <div class="simulator-controls" id="simulatorControls">
+                        <button class="sim-btn active" data-weather="clear" title="맑음">
+                            <i class="fa-solid fa-sun"></i> 맑음
+                        </button>
+                        <button class="sim-btn" data-weather="cloudy" title="흐림">
+                            <i class="fa-solid fa-cloud"></i> 흐림
+                        </button>
+                        <button class="sim-btn" data-weather="rainy" title="비">
+                            <i class="fa-solid fa-cloud-showers-heavy"></i> 비
+                        </button>
+                        <button class="sim-btn" data-weather="snowy" title="눈">
+                            <i class="fa-solid fa-snowflake"></i> 눈
+                        </button>
+                        <button class="sim-btn" data-weather="night" title="밤">
+                            <i class="fa-solid fa-moon"></i> 밤
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search History / Recent searches -->
+                <div class="setting-group history-group">
+                    <label class="setting-label">최근 조회 지역</label>
+                    <div class="history-list" id="historyList">
+                        <div class="empty-history">최근 조회 이력이 없습니다.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Weather Data -->
+            <section class="data-panel">
+                <!-- Hero Weather Card -->
+                <div class="hero-weather-card glass-card">
+                    <div class="hero-header">
+                        <div class="location-info">
+                            <h3 id="currentLocationName">서울특별시 종로구</h3>
+                            <span class="coord-badge" id="currentCoordBadge">격자 X: 61, Y: 127</span>
+                        </div>
+                        <button class="btn btn-icon" id="btnRefresh" title="새로고침">
+                            <i class="fa-solid fa-rotate-right" id="refreshIcon"></i>
+                        </button>
+                    </div>
+
+                    <div class="hero-body">
+                        <!-- Big Temperature & Status -->
+                        <div class="main-stats">
+                            <div class="weather-icon-wrapper">
+                                <div class="icon-glow" id="weatherIconGlow"></div>
+                                <div id="weatherIconContainer">
+                                    <!-- Dynamic SVG icon will be generated here -->
+                                    <i class="fa-solid fa-sun weather-main-icon"></i>
+                                </div>
+                            </div>
+                            <div class="temp-wrapper">
+                                <span class="current-temp" id="currentTemp">--</span><span class="temp-unit">°C</span>
+                                <div class="weather-status-desc" id="weatherDesc">조회 중...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-metrics Grid inside Hero Card -->
+                    <div class="metrics-grid">
+                        <!-- Humidity Card -->
+                        <div class="metric-card glass-card-nested">
+                            <div class="metric-icon humidity">
+                                <i class="fa-solid fa-droplet"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-title">습도</span>
+                                <span class="metric-value" id="metricHumidity">-- %</span>
+                            </div>
+                        </div>
+
+                        <!-- Precipitation Card -->
+                        <div class="metric-card glass-card-nested">
+                            <div class="metric-icon rain">
+                                <i class="fa-solid fa-cloud-rain"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-title">강수량</span>
+                                <span class="metric-value" id="metricRain">-- mm</span>
+                            </div>
+                        </div>
+
+                        <!-- Wind Card -->
+                        <div class="metric-card glass-card-nested">
+                            <div class="metric-icon wind">
+                                <i class="fa-solid fa-wind" id="windIcon"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-title">바람 (풍속/풍향)</span>
+                                <span class="metric-value" id="metricWind">-- m/s</span>
+                            </div>
+                        </div>
+
+                        <!-- Update Time Card -->
+                        <div class="metric-card glass-card-nested">
+                            <div class="metric-icon update">
+                                <i class="fa-solid fa-calendar-day"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-title">발표 시각</span>
+                                <span class="metric-value" id="metricUpdateTime">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hourly Forecast Card -->
+                <div class="forecast-card glass-card">
+                    <div class="card-header">
+                        <h2><i class="fa-regular fa-hourglass-half"></i> 초단기 기상 예보 (향후 6시간)</h2>
+                        <span class="sub-header-info">매시각 45분 업데이트</span>
+                    </div>
+                    <div class="forecast-scroll-container" id="forecastScrollContainer">
+                        <!-- Forecast items will be added dynamically here -->
+                        <div class="forecast-placeholder">날씨 정보를 조회하면 다음 시간 예보가 표시됩니다.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 2026 AURA Weather. 모든 데이터는 기상청 단기예보 OpenAPI 실시간 정보를 바탕으로 제공됩니다.</p>
+            <p class="author-credits">Designed & Developed with Premium Glassmorphism and CSS Particle Engines</p>
+        </footer>
+    </div>
+
+    <!-- Error/Notification Dialog -->
+    <div class="toast-notification" id="toastNotification">
+        <i class="fa-solid fa-circle-exclamation toast-icon"></i>
+        <span class="toast-message" id="toastMessage">오류 메시지</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
